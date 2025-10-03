@@ -1,0 +1,11 @@
+[project]
+name = "ai-inference-study-docs"
+version = "0.1.0"
+description = "A comprehensive guide to deploying AI models in production environments with practical examples and performance benchmarks."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.21",
+]
+
