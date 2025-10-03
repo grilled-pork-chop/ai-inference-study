@@ -57,9 +57,7 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
-docs_dir: "docs"
-site_dir: "site"
-strict: true
+
 markdown_extensions:
   - abbr
   - admonition
