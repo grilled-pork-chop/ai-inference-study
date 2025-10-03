@@ -1,0 +1,103 @@
+site_name: AI Inference Study
+site_url: https://grilled-pork-chop.github.io/ai-inference-study/
+site_description: A comprehensive guide to deploying AI models in production environments with practical examples and performance benchmarks.
+site_author: Grilled Pork Chop
+repo_name: grilled-pork-chop/ai-inference-study
+repo_url: https://github.com/grilled-pork-chop/ai-inference-study
+
+theme:
+  name: material
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    # - content.code.select
+    # - content.footnote.tooltips
+    # - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    # - navigation.instant
+    # - navigation.instant.prefetch
+    # - navigation.instant.progress
+    # - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    # - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+nav:
+  - Home: index.md
+  - Models:
+    - models/index.md
+    - Domains: models/models-domains.md
+    - Formats: models/models-formats.md
+  - Inference:
+    - inference/index.md
+    - Interfaces: inference/inference-interfaces.md
+    - Servers: inference/inference-servers.md
+  - Benchmarks:
+    - benchmarks/index.md
+    - 1 - Image Classification: benchmarks/group1-image-classification.md
+    - 2 - Text Generation: benchmarks/group2-text-generation.md
+    - 3 - Embeddings: benchmarks/group3-embeddings.md
