@@ -57,7 +57,6 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
-
 markdown_extensions:
   - abbr
   - admonition
