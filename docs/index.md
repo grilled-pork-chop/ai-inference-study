@@ -18,7 +18,7 @@ This documentation provides practical guidance for backend engineers and MLOps p
 
 ## 🚀 Quick Start
 
-1. **Choose your model domain**: [Computer Vision](models/models-domains.md#computer-vision), [NLP/LLMs](models/models-domains.md#nlp-large-language-models), [Speech](models/models-domains.md#speech-audio-processing), or [Multimodal](models/models-domains.md#multimodal-ai)
+1. **Choose your model domain**: [Computer Vision, NLP/LLMs, Speech, Multimodal](models/models-domains.md)
 2. **Select model format**: [ONNX, TorchScript, SavedModel](models/models-formats.md) based on your infrastructure
 3. **Pick serving interface**: [REST, gRPC, WebSocket](inference/inference-interfaces.md) for your latency requirements
 4. **Choose inference server**: [Triton, TorchServe, vLLM](inference/inference-servers.md) for your scale and complexity needs
