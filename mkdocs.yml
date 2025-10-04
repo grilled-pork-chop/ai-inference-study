@@ -85,12 +85,20 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 nav:
   - Home: index.md
   - Models:
     - models/index.md
     - Domains: models/models-domains.md
     - Formats: models/models-formats.md
+    - Quantization: models/models-quantization.md
   - Inference:
     - inference/index.md
     - Interfaces: inference/inference-interfaces.md
