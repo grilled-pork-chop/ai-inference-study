@@ -10,7 +10,7 @@ The full documentation is built with [MkDocs](https://www.mkdocs.org/) using the
 
 It covers:
 - **AI Models** – types (LLMs, vision, speech, multimodal) and specializations  
-- **Interfaces** – REST, gRPC, WebSocket, streaming APIs  
+- **Interfaces** – REST, gRPC, WebSocket, streaming APIs, MCP.  
 - **Inference Servers** – Triton, TorchServe, BentoML, KServe, vLLM, etc.  
 - **Projects** – concrete stacks for benchmarking  
 - **Benchmarks** – methodology, metrics, and results  
@@ -30,7 +30,7 @@ uv sync --frozen
 ### Run Docs Locally
 
 ```bash
-uv run mkdocs serve -w docs
+uv run mkdocs serve --livereload --open
 ```
 
 ### Build Static Site

@@ -4,6 +4,7 @@ site_description: A comprehensive guide to deploying AI models in production env
 site_author: Grilled Pork Chop
 repo_name: grilled-pork-chop/ai-inference-study
 repo_url: https://github.com/grilled-pork-chop/ai-inference-study
+edit_uri: blob/main/docs
 
 theme:
   name: material
