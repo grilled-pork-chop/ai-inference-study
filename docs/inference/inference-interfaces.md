@@ -1,887 +1,419 @@
-# Inference Interfaces
+# AI Inference Interfaces
 
-Communication interfaces determine how clients interact with your AI models. The choice impacts latency, scalability, development complexity, and user experience.
+## Overview
 
-## 🎯 Interface Comparison Matrix
+Inference interfaces define how clients communicate with **inference servers** (systems that expose trained ML models for prediction) — exchanging inputs, parameters, and outputs.  
+Choosing the right interface impacts **latency**, **concurrency**, **compatibility**, and **observability**.
 
-| Protocol      | Latency | Throughput | Streaming | Complexity | Browser Support | Best For                        |
-| ------------- | ------- | ---------- | --------- | ---------- | --------------- | ------------------------------- |
-| **REST/HTTP** | Medium  | High       | ❌         | Low        | ✅               | Simple APIs, CRUD operations    |
-| **gRPC**      | Low     | Very High  | ✅         | Medium     | Limited*        | High-performance, microservices |
-| **WebSocket** | Low     | Medium     | ✅         | Medium     | ✅               | Real-time, bidirectional        |
-| **SSE**       | Low     | Medium     | ✅         | Low        | ✅               | Server-to-client streaming      |
+!!! tip "Think of interfaces like transport layers for intelligence"
+    Just as HTTP, TCP, or gRPC define how data moves, inference interfaces define how predictions flow between models, services, and clients.
 
-*Requires gRPC-Web proxy for browsers
+Many production systems use **multiple interfaces simultaneously** — for example, exposing REST for external clients while using gRPC for internal service-to-service communication.
 
-## 🚀 REST/HTTP APIs
+---
 
-### When to Use REST
-- **Simple prediction APIs** with request/response pattern
-- **Maximum compatibility** across clients and tools
-- **Easy debugging** and testing with standard HTTP tools
-- **Caching requirements** with HTTP cache headers
+## Common Inference Interfaces
 
-### Technical Implementation
+| Interface                        | Transport Layer             | Data Format            | Typical Use                    | Strengths                       | Weaknesses                      |
+| -------------------------------- | --------------------------- | ---------------------- | ------------------------------ | ------------------------------- | ------------------------------- |
+| **REST**                         | HTTP/1.1                    | JSON / binary (Base64) | Web APIs, dashboards           | Simple, universal               | No streaming, higher overhead   |
+| **gRPC**                         | HTTP/2 (Protobuf)           | Binary                 | Microservices, high throughput | Fast, multiplexed, type-safe    | Harder to debug, browser limits |
+| **WebSocket**                    | TCP / HTTP Upgrade          | JSON / binary frames   | Real-time interaction          | Full-duplex, low latency        | Stateful, requires session mgmt |
+| **Streaming API**                | HTTP/2, WebSocket, SSE      | Incremental            | LLM, speech, video             | Continuous results, low-latency | Reconnection & state mgmt       |
+| **MCP (Model Context Protocol)** | JSON-RPC over HTTP/WS/stdin | JSON                   | LLM ↔ Tool interface           | Context-aware, unified          | Emerging standard (as of 2024)  |
 
-**FastAPI Example:**
-```python
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import torch
-import time
-from prometheus_client import Counter, Histogram
+---
 
-app = FastAPI(title="AI Inference API", version="1.0.0")
+## REST Interface
 
-# Metrics
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
-REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'HTTP request latency')
+### Overview
+The **REST API** (Representational State Transfer) is the most common inference interface.  
+Clients send an HTTP `POST` request with serialized input (e.g., JSON or multipart) and receive a JSON response containing model outputs.
 
-class PredictionRequest(BaseModel):
-    image_data: str  # base64 encoded
-    model_name: str = "default"
-    confidence_threshold: float = 0.5
+### Technical Characteristics
+- **Transport:** HTTP/1.1  
+- **Encoding:** JSON (UTF-8) or Base64 binary  
+- **Connection:** Stateless, short-lived  
+- **Concurrency:** One request per inference  
+- **Observability:** Tracing via OpenTelemetry, Prometheus, or APM  
+- **Load Handling:** Cached, retried, and rate-limited by gateways  
 
-class PredictionResponse(BaseModel):
-    predictions: list[dict]
-    confidence_scores: list[float]
-    processing_time_ms: float
-    model_version: str
+**Architecture:**  
+`Client → Reverse Proxy (Nginx/Envoy) → Inference Server → Model Runtime → Response`
 
-@app.post("/predict", response_model=PredictionResponse)
-async def predict(request: PredictionRequest):
-    start_time = time.time()
-    
-    try:
-        # Load and preprocess image
-        image_tensor = preprocess_image(request.image_data)
-        
-        # Model inference
-        with torch.no_grad():
-            outputs = model(image_tensor)
-            predictions = postprocess_outputs(outputs, request.confidence_threshold)
-        
-        processing_time = (time.time() - start_time) * 1000
-        
-        # Record metrics
-        REQUEST_COUNT.labels(method="POST", endpoint="/predict", status="success").inc()
-        REQUEST_LATENCY.observe(processing_time / 1000)
-        
-        return PredictionResponse(
-            predictions=predictions["boxes"],
-            confidence_scores=predictions["scores"],
-            processing_time_ms=processing_time,
-            model_version="yolov8n-1.0.0"
-        )
-        
-    except Exception as e:
-        REQUEST_COUNT.labels(method="POST", endpoint="/predict", status="error").inc()
-        raise HTTPException(status_code=500, detail=str(e))
+**Authentication:** Bearer tokens, API keys, OAuth 2.0, mTLS
 
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "gpu_available": torch.cuda.is_available(),
-        "timestamp": time.time()
-    }
 
-# Batch prediction endpoint
-@app.post("/predict/batch")
-async def predict_batch(requests: list[PredictionRequest]):
-    batch_results = []
-    
-    # Process in batches for efficiency
-    batch_size = 8
-    for i in range(0, len(requests), batch_size):
-        batch = requests[i:i + batch_size]
-        
-        # Batch preprocessing
-        batch_tensors = torch.stack([preprocess_image(req.image_data) for req in batch])
-        
-        # Batch inference
-        with torch.no_grad():
-            batch_outputs = model(batch_tensors)
-        
-        # Individual postprocessing
-        for j, req in enumerate(batch):
-            predictions = postprocess_outputs(batch_outputs[j], req.confidence_threshold)
-            batch_results.append(predictions)
-    
-    return {"results": batch_results, "batch_size": len(requests)}
+### Advantages
+✅ Universal and simple  
+✅ Mature tooling (Swagger, OpenAPI)  
+✅ Human-readable and easy to debug  
+✅ Easy integration with web frameworks  
+✅ Ideal for low-throughput, human-facing services  
+✅ Excellent client library support across all languages  
+
+### Limitations
+❌ Higher per-request latency due to connection overhead  
+❌ No native streaming (token-by-token)  
+❌ JSON overhead for large payloads (>1MB)  
+❌ Binary data requires Base64 encoding (+33% size increase)  
+
+!!! info "Typical Use Cases"
+    - Web and mobile APIs  
+    - Dashboard or monitoring queries  
+    - One-shot predictions (classification, regression)  
+    - Low-scale inference endpoints  
+    - Public-facing APIs with broad client compatibility  
+
+!!! warning "Typical Overhead"
+    ~50–300 ms per request, breakdown:
+
+    - DNS resolution: 20–120 ms (if not cached)
+    - TCP handshake: 10–50 ms
+    - TLS negotiation: 50–100 ms (HTTPS)
+    - JSON serialization/deserialization: 5–30 ms
+    - Network latency: variable by geography
+
+!!! warning "Common pitfalls"
+    - **Over-polling**: Clients polling for updates instead of using SSE/WebSocket
+    - **Large JSON payloads**: Should use binary formats or compression
+    - **Missing rate limiting**: Can overwhelm inference servers
+
+---
+
+## gRPC Interface
+
+### Overview
+**gRPC** is a binary RPC framework over HTTP/2 — the standard for **high-performance internal inference** across distributed systems.
+
+### Technical Characteristics
+- **Transport:** HTTP/2, multiplexed persistent streams  
+- **Serialization:** Protocol Buffers (compact binary)  
+- **Streaming Modes:** Unary, Server, Client, Bidirectional  
+- **Observability:** Interceptors for tracing/metrics  
+- **Load Balancing:** xDS, Istio, or Linkerd support  
+
+**Architecture:**  
+`Client → gRPC Channel → Router → Model Runtime (GPU/CPU)`
+
+**Authentication:** mTLS, JWT tokens, interceptor-based auth
+
+### Advantages
+✅ Low latency, high throughput  
+✅ Supports full streaming and multiplexed calls  
+✅ Strong typing and schema validation  
+✅ Ideal for distributed systems and microservices  
+✅ Efficient binary encoding reduces bandwidth  
+✅ Connection reuse eliminates handshake overhead  
+
+### Limitations
+❌ Harder to debug due to binary payloads  
+❌ Requires code generation  
+❌ Not browser-native (needs gRPC-Web)  
+❌ Complex versioning across teams  
+❌ Limited client library maturity in some languages
+
+!!! info "Typical Use Cases"
+    - Internal model inference APIs  
+    - High-throughput distributed systems  
+    - Streaming outputs from LLMs  
+    - Cloud inference backends (Triton, Ray Serve, TensorFlow Serving)  
+    - Microservice mesh architectures  
+
+!!! success "Performance"
+    3–10× faster than REST depending on workload:
+
+    - Unary calls with small payloads (<10KB): 2–3× faster
+    - Large binary payloads (>1MB): 5–10× faster
+    - Streaming workloads: 10–20× more efficient
+
+!!! warning "Common pitfalls"
+    - **Version skew**: Protobuf schema mismatches between clients and servers
+    - **Poor error handling**: Binary errors harder to debug without proper logging
+    - **Load balancing**: L7 load balancers required; L4 won't distribute properly
+
+---
+
+## WebSocket Interface
+
+### Overview
+**WebSocket** provides a persistent, full-duplex TCP connection — ideal for **interactive inference** or **streaming outputs**.
+
+### Technical Characteristics
+- **Transport:** TCP (upgraded from HTTP)  
+- **Message Format:** JSON or binary frames  
+- **Connection Model:** Stateful and persistent  
+- **Keepalive:** Ping/pong frames  
+- **Error Recovery:** Client-side reconnect logic  
+
+**Runtime Behavior:**  
+Each connection maps to a live inference session, streaming:
+
+- Incremental input/output  
+- Status/progress messages  
+- Control signals (cancel/resume)  
+
+**Authentication:** Token-based auth during handshake, session validation
+
+### Advantages
+✅ Real-time, bidirectional communication  
+✅ Low-latency message delivery (<10ms in optimal network conditions)  
+✅ Efficient for token/audio streaming  
+✅ Native browser and client support  
+✅ Single persistent connection reduces overhead  
+
+### Limitations
+❌ Stateful connections require session management  
+❌ Load balancing requires sticky sessions or consistent hashing  
+❌ Connection interruptions need reconnection logic  
+❌ No standard schema like OpenAPI  
+❌ Memory footprint scales with concurrent connections  
+
+!!! info "Typical Use Cases"
+    - Conversational UIs and chatbots  
+    - Token-by-token text streaming  
+    - Real-time translation or transcription  
+    - Interactive model sessions  
+    - Live collaboration tools with AI assistance  
+
+!!! warning "Latency"
+    - <10 ms per message on stable, low-latency networks (regional).
+    - Cross-continental latency adds 100–300 ms baseline.
+
+!!! success "Scaling"
+    With proper architecture (connection pooling, message brokers like Redis/Kafka, horizontal scaling with sticky sessions), WebSocket can handle millions of concurrent connections.
+
+
+!!! warning "Common pitfalls"
+    - **No reconnection logic**: Clients must handle disconnections gracefully
+    - **Memory leaks**: Forgotten connections accumulate server-side
+    - **Firewall issues**: Some corporate networks block WebSocket
+
+---
+
+## Streaming APIs
+
+### Overview
+**Streaming inference** sends results incrementally (token-by-token, frame-by-frame).  
+Implemented using **SSE**, **WebSocket**, or **gRPC streams**.
+
+### Technical Characteristics
+- **Transport:** HTTP/2 or WebSocket  
+- **Connection:** Long-lived and stateful  
+- **Backpressure:** Client flow control  
+- **Fault Tolerance:** Resume/reconnect support  
+
+| **Protocol**                 | **Description**                 | **Example**                   |
+| ---------------------------- | ------------------------------- | ----------------------------- |
+| **SSE (Server-Sent Events)** | Unidirectional stream over HTTP | OpenAI, Anthropic APIs        |
+| **WebSocket**                | Bidirectional communication     | Real-time chat, transcription |
+| **gRPC Stream**              | Persistent typed stream         | Triton, TensorFlow Serving    |
+
+
+**Runtime Behavior:**
+Streaming reduces perceived latency — clients receive **partial results** while inference continues.  
+Async runtimes handle thousands of open streams efficiently.
+
+**Behavior:** Output streams until inference completes or connection closes.
+
+**Cost considerations:** Streaming can reduce perceived latency but may increase total connection time and bandwidth costs for cloud deployments.
+
+**Authentication:** Token-based, often refreshed during long sessions
+
+### Advantages
+✅ Responsive, low-latency output  
+✅ Long inference session support  
+✅ Supports progressive decoding and real-time feedback  
+✅ Works well with async frameworks (FastAPI, Node.js)  
+✅ Reduces time-to-first-token for generative models  
+
+### Limitations
+❌ Stateful connections (complex scaling)  
+❌ Harder to trace or retry partial results  
+❌ Reconnection logic required  
+❌ Clients must handle partial outputs and buffering  
+❌ Connection lifecycle management adds complexity  
+
+!!! info "Typical Use Cases"
+    - Generative AI (text, audio, or video)  
+    - Real-time model feedback loops  
+    - Progressive rendering of results  
+    - Continuous data ingestion (e.g., IoT devices)  
+    - Long-running inference tasks with progress updates  
+
+!!! warning "Common pitfalls"
+    - **Backpressure ignored:** Fast producers overwhelm slow consumers
+    - **No timeout handling:** Hanging streams consume resources
+    - **Partial results:** Clients must handle incomplete outputs
+
+---
+
+## MCP (Model Context Protocol)
+
+### Overview
+**MCP (Model Context Protocol)**, introduced by Anthropic in late 2024, defines a structured, bidirectional communication layer between **models, tools, and clients**.  
+It standardizes **context management**, **capability discovery**, and **tool invocation** across AI systems.
+
+### Technical Characteristics
+- **Transport:** JSON-RPC over HTTP, WebSocket, or stdin/stdout  
+- **Capabilities:** Dynamic and negotiated at runtime  
+- **State:** Persistent session context  
+- **Authentication:** Delegated to host environment  
+- **Goal:** Model—tool interoperability  
+
+**How It Works:**  
+MCP servers expose **capabilities** (functions, data access, retrieval).  
+Clients (LLMs/orchestrators) **discover and call** them dynamically via **session-based negotiation** — similar to plugin protocols.
+
+**Authentication:** Delegated to transport layer, session-based validation
+
+!!! example "Example Flow"
+    1. Client initiates MCP session
+    2. Server advertises available tools/capabilities
+    3. LLM queries context or invokes tools
+    4. Server executes and returns structured results
+    5. Session maintains conversation history and state
+
+### Advantages
+✅ Unified standard for model—tool interaction  
+✅ Context sharing across components  
+✅ Protocol-agnostic (multi-transport)  
+✅ Extensible for orchestration systems  
+✅ Standardized capability discovery  
+
+### Limitations
+❌ Emerging standard with evolving ecosystem (as of 2024)  
+❌ Not optimized for raw tensor transport  
+❌ Session negotiation adds initial overhead  
+❌ Limited production deployments and tooling  
+
+!!! info "Use cases"
+    - Agent frameworks and orchestration  
+    - LLMs calling external APIs/databases  
+    - IDEs and AI-assisted tools  
+    - Multi-tool AI workflows  
+    - Context-aware AI applications  
+
+!!! warning "Common pitfalls"
+    - **Over-abstraction:** Not all tools need MCP's complexity
+    - **Session leaks:** Context accumulation without cleanup
+    - **Tool versioning:** Capability changes break clients
+
+---
+
+## Performance Comparison
+
+| Interface         | Latency (per call) | Throughput (req/s/core) | Overhead | Concurrency | Scaling Model | Best For                    |
+| ----------------- | ------------------ | ----------------------- | -------- | ----------- | ------------- | --------------------------- |
+| **REST**          | 10–30 ms           | 150–300                 | +30–50%* | Linear      | Stateless     | Public APIs, simple queries |
+| **gRPC (Unary)**  | 1–5 ms             | 800–1500                | +5–10%   | Excellent   | Stateless     | Internal services, clusters |
+| **WebSocket**     | 1–3 ms†            | 400–600 streams         | +10–20%  | Good        | Stateful      | Real-time interaction       |
+| **Streaming/SSE** | <1 ms/chunk        | 200–500                 | +15–25%  | Medium      | Stateful      | Generative AI, progressive  |
+| **gRPC Stream**   | <1 ms/chunk        | 600–1000                | +5–10%   | Excellent   | Stateful      | High-perf streaming         |
+| **MCP**           | 5–15 ms            | 100–300                 | +20–40%  | Session     | Stateful      | Tool orchestration          |
+
+!!! note "Interpretation"
+    - Overhead varies by payload size: small payloads (<1 KB) may experience 100%+ overhead, while large payloads (>10 MB) see 20–30%.  
+    - Values shown are **after initial handshake** — add 50–100 ms for connection establishment.  
+    - Throughput assumes optimal async handling and minimal I/O contention.  
+    - Latency excludes **model inference time** (GPU/CPU computation).
+
+
+!!! tip "Practical Observations"
+    - **gRPC** → Best for **high-throughput, low-latency** internal inference  
+    - **REST** → Dominates **external and public-facing** APIs  
+    - **WebSocket / SSE** → Ideal for **real-time generative workloads**  
+    - **MCP** → Focused on **tool interoperability and contextual intelligence**
+
+---
+
+## Deployment Considerations
+
+### Choosing by Network Topology
+
+| Environment                            | Recommended Interface | Reason                             |
+| -------------------------------------- | --------------------- | ---------------------------------- |
+| Intra-cluster (internal microservices) | gRPC                  | Persistent low-latency channels    |
+| Public API Gateway (internet-facing)   | REST or SSE           | Firewall-friendly, broad support   |
+| Real-time user sessions                | WebSocket             | Low latency, stateful              |
+| Hybrid orchestration (tools, LLMs)     | MCP                   | Structured interoperability        |
+| Batch/offline inference                | REST                  | Easy queue/job integration         |
+| Edge deployment (mobile, IoT)          | REST or gRPC          | REST for simplicity, gRPC for perf |
+
+---
+
+### Scaling, Resources & Observability
+
+| Interface       | Load Balancing / Scaling                                                 | Resource Utilization                               | Observability / Debugging                                                 |
+| --------------- | ------------------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------- |
+| REST            | Stateless → horizontal scaling behind Nginx, Envoy, or API Gateway       | CPU-bound (serialization dominates)                | Prometheus, Jaeger, OpenTelemetry integration                             |
+| gRPC (Unary)    | Connection-aware load balancing via xDS or service mesh (Istio, Linkerd) | CPU-bound                                          | Prometheus, Jaeger, OpenTelemetry integration                             |
+| WebSocket       | Requires sticky sessions or consistent hashing; Redis for session state  | Memory-bound (many concurrent sessions, buffering) | Custom per-session metrics; trace connection lifecycle                    |
+| SSE / Streaming | Manage connection lifetimes and backpressure; consider pooling           | Memory-bound (long-lived streams)                  | Custom per-session metrics; trace connection lifecycle                    |
+| gRPC Stream     | Persistent channels                                                      | CPU / memory-bound depending on concurrency        | Prometheus / OpenTelemetry                                                |
+| MCP             | Persistent orchestrator/sidecar; scales with session count               | Context persistence increases memory footprint     | Structured JSON logs + protocol-level tracing; context flow visualization |
+
+---
+
+### Security Considerations
+
+| Interface     | Authentication Methods  | Encryption      | Common Vulnerabilities        |
+| ------------- | ----------------------- | --------------- | ----------------------------- |
+| **REST**      | API keys, OAuth, JWT    | TLS 1.2/1.3     | Token leakage, injection      |
+| **gRPC**      | mTLS, JWT, interceptors | TLS 1.2/1.3     | Certificate management        |
+| **WebSocket** | Token during handshake  | WSS (TLS)       | Session hijacking, XSS        |
+| **SSE**       | Bearer token, cookies   | TLS             | CSRF, connection hijacking    |
+| **MCP**       | Environment-delegated   | Transport-layer | Session poisoning, tool abuse |
+
+---
+
+## Interface Selection Guide
+
+### By Goal
+
+| Goal                          | Recommended Interface | Notes                     |
+| ----------------------------- | --------------------- | ------------------------- |
+| Synchronous prediction        | REST                  | Simple, stateless         |
+| High-throughput production    | gRPC                  | Binary, efficient         |
+| Real-time feedback            | WebSocket             | Full-duplex               |
+| Token streaming               | gRPC Stream / SSE     | Progressive inference     |
+| Context-aware AI systems      | MCP                   | Tool & memory integration |
+| Public API with broad clients | REST                  | Universal compatibility   |
+| Microservice mesh             | gRPC                  | Service mesh integration  |
+| Browser-based AI apps         | REST + WebSocket      | Native browser support    |
+
+
+### By Priority
+
+| Priority        | Best Interface   | Rationale                          |
+| --------------- | ---------------- | ---------------------------------- |
+| Ease of use     | REST             | Universal, simple, well-documented |
+| Performance     | gRPC             | Binary protocol, multiplexing      |
+| Real-time UX    | WebSocket / SSE  | Low latency, progressive results   |
+| Extensibility   | MCP              | Structured tool/context management |
+| Standardization | REST / gRPC      | Mature ecosystems, broad adoption  |
+| Browser support | REST / WebSocket | Native browser APIs                |
+| Debugging       | REST             | Human-readable, curl-friendly      |
+
+---
+
+## Typical Architecture
+```
+Client Layer
+├── REST → API Gateway → FastAPI / Triton HTTP → Model Runtime
+├── gRPC → Service Mesh → Triton / TF Serving → GPU Scheduler
+├── WebSocket → Async Gateway → Stream Handler → Model Queue
+├── SSE → Token Stream Gateway → LLM Service → Frontend
+└── MCP → Tool/Context Server → LLM Orchestrator → Agent Framework
 ```
 
-**Performance Optimizations:**
-```python
-# HTTP/2 with uvicorn
-uvicorn main:app --host 0.0.0.0 --port 8000 --http h2
+## Summary
 
-# Connection pooling for clients
-import httpx
+The right interface depends on your specific requirements:
 
-class AIClient:
-    def __init__(self, base_url: str):
-        self.client = httpx.AsyncClient(
-            base_url=base_url,
-            limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
-            timeout=httpx.Timeout(30.0)
-        )
-    
-    async def predict(self, image_data: str):
-        response = await self.client.post(
-            "/predict",
-            json={"image_data": image_data}
-        )
-        return response.json()
-```
+- **Start with REST** for simplicity and broad compatibility
+- **Adopt gRPC** when performance and throughput become critical
+- **Use WebSocket/SSE** for real-time, streaming workloads
+- **Explore MCP** for context-aware, multi-tool AI systems
 
-### REST Performance Characteristics
-- **Latency Overhead**: 3-8ms (JSON serialization + HTTP)
-- **Throughput**: 1,000-10,000 RPS (depending on payload size)
-- **Payload Limits**: Typically 1-100MB per request
-- **Caching**: Excellent with HTTP cache headers
-
-## ⚡ gRPC
-
-### When to Use gRPC
-- **High-performance microservices** communication
-- **Strong typing** requirements with Protocol Buffers
-- **Bidirectional streaming** for real-time inference
-- **Language interoperability** with type safety
-
-### Technical Implementation
-
-**Protocol Buffer Definition (`inference.proto`):**
-```protobuf
-syntax = "proto3";
-
-package inference;
-
-service InferenceService {
-    // Unary prediction
-    rpc Predict(PredictRequest) returns (PredictResponse);
-    
-    // Server streaming for batch results
-    rpc PredictStream(PredictRequest) returns (stream PredictResponse);
-    
-    // Bidirectional streaming for real-time inference
-    rpc PredictRealtime(stream PredictRequest) returns (stream PredictResponse);
-}
-
-message PredictRequest {
-    string model_name = 1;
-    bytes image_data = 2;
-    float confidence_threshold = 3;
-    map<string, string> metadata = 4;
-}
-
-message PredictResponse {
-    repeated BoundingBox predictions = 1;
-    repeated float confidence_scores = 2;
-    float processing_time_ms = 3;
-    string model_version = 4;
-    string request_id = 5;
-}
-
-message BoundingBox {
-    float x = 1;
-    float y = 2;
-    float width = 3;
-    float height = 4;
-    string class_name = 5;
-}
-```
-
-**Server Implementation:**
-```python
-import grpc
-from concurrent import futures
-import inference_pb2_grpc
-import inference_pb2
-import torch
-import asyncio
-
-class InferenceServicer(inference_pb2_grpc.InferenceServiceServicer):
-    def __init__(self, model):
-        self.model = model
-        self.request_count = 0
-    
-    def Predict(self, request, context):
-        start_time = time.time()
-        self.request_count += 1
-        
-        try:
-            # Convert protobuf to tensor
-            image_tensor = self.bytes_to_tensor(request.image_data)
-            
-            # Model inference
-            with torch.no_grad():
-                outputs = self.model(image_tensor)
-                predictions = self.postprocess_outputs(outputs, request.confidence_threshold)
-            
-            # Build response
-            response = inference_pb2.PredictResponse()
-            response.processing_time_ms = (time.time() - start_time) * 1000
-            response.model_version = "yolov8n-1.0.0"
-            response.request_id = f"req-{self.request_count}"
-            
-            for box, score in zip(predictions["boxes"], predictions["scores"]):
-                bbox = response.predictions.add()
-                bbox.x, bbox.y, bbox.width, bbox.height = box
-                bbox.class_name = predictions["classes"][len(response.predictions) - 1]
-                response.confidence_scores.append(score)
-            
-            return response
-            
-        except Exception as e:
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return inference_pb2.PredictResponse()
-    
-    def PredictStream(self, request, context):
-        """Server streaming - useful for batch processing"""
-        batch_size = 32
-        
-        # Process in batches and stream results
-        for i in range(0, len(request.batch_data), batch_size):
-            batch = request.batch_data[i:i + batch_size]
-            
-            # Batch inference
-            batch_results = self.process_batch(batch)
-            
-            # Stream each result
-            for result in batch_results:
-                yield result
-    
-    def PredictRealtime(self, request_iterator, context):
-        """Bidirectional streaming for real-time inference"""
-        for request in request_iterator:
-            # Process each request as it arrives
-            response = self.Predict(request, context)
-            yield response
-
-# Server setup
-def serve():
-    server = grpc.server(
-        futures.ThreadPoolExecutor(max_workers=10),
-        options=[
-            ('grpc.keepalive_time_ms', 30000),
-            ('grpc.keepalive_timeout_ms', 5000),
-            ('grpc.keepalive_permit_without_calls', True),
-            ('grpc.http2.max_pings_without_data', 0),
-            ('grpc.http2.min_time_between_pings_ms', 10000),
-            ('grpc.http2.min_ping_interval_without_data_ms', 300000)
-        ]
-    )
-    
-    inference_pb2_grpc.add_InferenceServiceServicer_to_server(
-        InferenceServicer(model), server
-    )
-    
-    listen_addr = '[::]:50051'
-    server.add_insecure_port(listen_addr)
-    
-    print(f"Starting gRPC server on {listen_addr}")
-    server.start()
-    server.wait_for_termination()
-```
-
-**Client Implementation:**
-```python
-import grpc
-import inference_pb2_grpc
-import inference_pb2
-
-class GRPCInferenceClient:
-    def __init__(self, server_address: str):
-        self.channel = grpc.insecure_channel(
-            server_address,
-            options=[
-                ('grpc.keepalive_time_ms', 30000),
-                ('grpc.keepalive_timeout_ms', 5000)
-            ]
-        )
-        self.stub = inference_pb2_grpc.InferenceServiceStub(self.channel)
-    
-    def predict(self, image_data: bytes, model_name: str = "default"):
-        request = inference_pb2.PredictRequest(
-            model_name=model_name,
-            image_data=image_data,
-            confidence_threshold=0.5
-        )
-        
-        response = self.stub.Predict(request)
-        return response
-    
-    def predict_stream(self, requests):
-        """Use server streaming for batch requests"""
-        for response in self.stub.PredictStream(requests):
-            yield response
-    
-    def predict_realtime(self, request_generator):
-        """Bidirectional streaming"""
-        response_iterator = self.stub.PredictRealtime(request_generator)
-        for response in response_iterator:
-            yield response
-```
-
-### gRPC Performance Characteristics
-- **Latency Overhead**: 1-2ms (binary protobuf + HTTP/2)
-- **Throughput**: 5,000-50,000 RPS (binary serialization advantage)
-- **Connection Efficiency**: Multiplexing over single connection
-- **Payload Size**: More efficient for large payloads
-
-## 🔄 WebSocket
-
-### When to Use WebSocket
-- **Real-time bidirectional communication** (chat, gaming)
-- **Streaming inference** with user interaction
-- **Long-lived connections** with state management
-- **Browser-based real-time applications**
-
-### Technical Implementation
-
-**FastAPI WebSocket Server:**
-```python
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-import json
-import asyncio
-import torch
-from typing import Dict, List
-
-app = FastAPI()
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: Dict[str, WebSocket] = {}
-        self.user_contexts: Dict[str, dict] = {}
-    
-    async def connect(self, websocket: WebSocket, client_id: str):
-        await websocket.accept()
-        self.active_connections[client_id] = websocket
-        self.user_contexts[client_id] = {"session_id": client_id, "request_count": 0}
-    
-    def disconnect(self, client_id: str):
-        if client_id in self.active_connections:
-            del self.active_connections[client_id]
-            del self.user_contexts[client_id]
-    
-    async def send_personal_message(self, message: dict, client_id: str):
-        websocket = self.active_connections.get(client_id)
-        if websocket:
-            await websocket.send_text(json.dumps(message))
-    
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections.values():
-            await connection.send_text(json.dumps(message))
-
-manager = ConnectionManager()
-
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
-    await manager.connect(websocket, client_id)
-    
-    try:
-        while True:
-            # Receive message from client
-            data = await websocket.receive_text()
-            message = json.loads(data)
-            
-            # Update context
-            context = manager.user_contexts[client_id]
-            context["request_count"] += 1
-            
-            # Process based on message type
-            if message["type"] == "predict":
-                await handle_prediction(message, client_id, context)
-            elif message["type"] == "stream_predict":
-                await handle_streaming_prediction(message, client_id, context)
-            elif message["type"] == "batch_predict":
-                await handle_batch_prediction(message, client_id, context)
-                
-    except WebSocketDisconnect:
-        manager.disconnect(client_id)
-
-async def handle_prediction(message: dict, client_id: str, context: dict):
-    """Handle single prediction request"""
-    try:
-        # Process image
-        image_data = message["data"]["image"]
-        image_tensor = preprocess_image_base64(image_data)
-        
-        # Inference
-        with torch.no_grad():
-            outputs = model(image_tensor)
-            predictions = postprocess_outputs(outputs)
-        
-        # Send response
-        response = {
-            "type": "prediction_result",
-            "request_id": message.get("request_id"),
-            "predictions": predictions,
-            "processing_time_ms": predictions["processing_time"],
-            "session_request_count": context["request_count"]
-        }
-        
-        await manager.send_personal_message(response, client_id)
-        
-    except Exception as e:
-        error_response = {
-            "type": "error",
-            "request_id": message.get("request_id"),
-            "error": str(e)
-        }
-        await manager.send_personal_message(error_response, client_id)
-
-async def handle_streaming_prediction(message: dict, client_id: str, context: dict):
-    """Handle streaming prediction with progressive results"""
-    request_id = message.get("request_id")
-    
-    try:
-        # Send processing started notification
-        await manager.send_personal_message({
-            "type": "stream_start",
-            "request_id": request_id
-        }, client_id)
-        
-        # Simulate progressive processing (useful for complex models)
-        image_data = message["data"]["image"]
-        
-        # Stage 1: Preprocessing
-        await manager.send_personal_message({
-            "type": "stream_progress",
-            "request_id": request_id,
-            "stage": "preprocessing",
-            "progress": 0.2
-        }, client_id)
-        
-        image_tensor = preprocess_image_base64(image_data)
-        
-        # Stage 2: Inference
-        await manager.send_personal_message({
-            "type": "stream_progress", 
-            "request_id": request_id,
-            "stage": "inference",
-            "progress": 0.6
-        }, client_id)
-        
-        with torch.no_grad():
-            outputs = model(image_tensor)
-        
-        # Stage 3: Postprocessing
-        await manager.send_personal_message({
-            "type": "stream_progress",
-            "request_id": request_id, 
-            "stage": "postprocessing",
-            "progress": 0.9
-        }, client_id)
-        
-        predictions = postprocess_outputs(outputs)
-        
-        # Send final result
-        await manager.send_personal_message({
-            "type": "stream_complete",
-            "request_id": request_id,
-            "predictions": predictions,
-            "progress": 1.0
-        }, client_id)
-        
-    except Exception as e:
-        await manager.send_personal_message({
-            "type": "stream_error",
-            "request_id": request_id,
-            "error": str(e)
-        }, client_id)
-```
-
-**JavaScript Client:**
-```javascript
-class AIWebSocketClient {
-    constructor(serverUrl, clientId) {
-        this.serverUrl = serverUrl;
-        this.clientId = clientId;
-        this.socket = null;
-        this.requestCallbacks = new Map();
-    }
-    
-    connect() {
-        return new Promise((resolve, reject) => {
-            this.socket = new WebSocket(`${this.serverUrl}/ws/${this.clientId}`);
-            
-            this.socket.onopen = () => {
-                console.log('WebSocket connected');
-                resolve();
-            };
-            
-            this.socket.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                this.handleMessage(message);
-            };
-            
-            this.socket.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                reject(error);
-            };
-            
-            this.socket.onclose = () => {
-                console.log('WebSocket disconnected');
-                // Implement reconnection logic
-                setTimeout(() => this.connect(), 5000);
-            };
-        });
-    }
-    
-    predict(imageData, requestId = null) {
-        requestId = requestId || Date.now().toString();
-        
-        return new Promise((resolve, reject) => {
-            this.requestCallbacks.set(requestId, { resolve, reject });
-            
-            this.socket.send(JSON.stringify({
-                type: 'predict',
-                request_id: requestId,
-                data: { image: imageData }
-            }));
-        });
-    }
-    
-    streamPredict(imageData, onProgress, requestId = null) {
-        requestId = requestId || Date.now().toString();
-        
-        return new Promise((resolve, reject) => {
-            this.requestCallbacks.set(requestId, { 
-                resolve, 
-                reject, 
-                onProgress,
-                isStream: true 
-            });
-            
-            this.socket.send(JSON.stringify({
-                type: 'stream_predict',
-                request_id: requestId,
-                data: { image: imageData }
-            }));
-        });
-    }
-    
-    handleMessage(message) {
-        const callback = this.requestCallbacks.get(message.request_id);
-        if (!callback) return;
-        
-        switch (message.type) {
-            case 'prediction_result':
-                callback.resolve(message);
-                this.requestCallbacks.delete(message.request_id);
-                break;
-                
-            case 'stream_progress':
-                if (callback.onProgress) {
-                    callback.onProgress(message);
-                }
-                break;
-                
-            case 'stream_complete':
-                callback.resolve(message);
-                this.requestCallbacks.delete(message.request_id);
-                break;
-                
-            case 'error':
-            case 'stream_error':
-                callback.reject(new Error(message.error));
-                this.requestCallbacks.delete(message.request_id);
-                break;
-        }
-    }
-}
-
-// Usage example
-const client = new AIWebSocketClient('ws://localhost:8000', 'user123');
-
-async function runInference() {
-    await client.connect();
-    
-    // Single prediction
-    const result = await client.predict(imageBase64);
-    console.log('Prediction:', result.predictions);
-    
-    // Streaming prediction with progress
-    const streamResult = await client.streamPredict(
-        imageBase64,
-        (progress) => {
-            console.log(`Progress: ${progress.stage} - ${progress.progress * 100}%`);
-            updateProgressBar(progress.progress);
-        }
-    );
-    console.log('Stream complete:', streamResult.predictions);
-}
-```
-
-### WebSocket Performance Characteristics
-- **Connection Overhead**: Initial handshake ~5-10ms, then 0ms
-- **Message Latency**: <1ms for small messages
-- **Concurrent Connections**: 1,000-10,000 per server
-- **Memory Usage**: ~2-5KB per connection
-
-## 📡 Server-Sent Events (SSE)
-
-### When to Use SSE
-- **Server-to-client streaming** only (no client uploads during stream)
-- **LLM token streaming** for chat applications
-- **Simple streaming** with HTTP compatibility
-- **Progressive result delivery**
-
-### Technical Implementation
-
-**FastAPI SSE Server:**
-```python
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
-import json
-import asyncio
-import torch
-from typing import AsyncIterator
-
-app = FastAPI()
-
-async def generate_tokens(prompt: str, model_name: str = "gpt-3.5") -> AsyncIterator[str]:
-    """Simulate LLM token generation"""
-    
-    # Initialize generation
-    yield f"data: {json.dumps({'type': 'start', 'model': model_name})}\n\n"
-    
-    # Encode prompt
-    inputs = tokenizer.encode(prompt, return_tensors="pt")
-    
-    # Generate tokens one by one
-    generated = inputs.clone()
-    
-    for step in range(100):  # Max 100 tokens
-        with torch.no_grad():
-            outputs = model(generated)
-            next_token_logits = outputs.logits[0, -1, :]
-            next_token = torch.multinomial(torch.softmax(next_token_logits, dim=-1), 1)
-            
-        # Decode token
-        token_text = tokenizer.decode(next_token, skip_special_tokens=True)
-        
-        # Send token
-        yield f"data: {json.dumps({'type': 'token', 'text': token_text, 'step': step})}\n\n"
-        
-        # Add to generated sequence
-        generated = torch.cat([generated, next_token.unsqueeze(0)], dim=1)
-        
-        # Small delay to simulate realistic generation speed
-        await asyncio.sleep(0.05)
-        
-        # Check for stop conditions
-        if next_token.item() == tokenizer.eos_token_id:
-            break
-    
-    # Send completion
-    final_text = tokenizer.decode(generated[0], skip_special_tokens=True)
-    yield f"data: {json.dumps({'type': 'complete', 'full_text': final_text})}\n\n"
-
-@app.get("/generate")
-async def generate_stream(prompt: str, model: str = "gpt-3.5"):
-    """Stream LLM token generation"""
-    
-    return StreamingResponse(
-        generate_tokens(prompt, model),
-        media_type="text/plain",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-        }
-    )
-
-@app.get("/predict_stream")
-async def predict_stream(image_url: str):
-    """Stream computer vision results progressively"""
-    
-    async def generate_predictions():
-        # Download and preprocess
-        yield f"data: {json.dumps({'stage': 'downloading', 'progress': 0.1})}\n\n"
-        image = download_image(image_url)
-        
-        yield f"data: {json.dumps({'stage': 'preprocessing', 'progress': 0.3})}\n\n"
-        image_tensor = preprocess_image(image)
-        
-        # Multiple model passes for progressive detail
-        models = ['fast_detector', 'accurate_detector', 'classifier']
-        all_predictions = {}
-        
-        for i, model_name in enumerate(models):
-            progress = 0.3 + (i + 1) * 0.2
-            yield f"data: {json.dumps({'stage': f'inference_{model_name}', 'progress': progress})}\n\n"
-            
-            model = load_model(model_name)
-            with torch.no_grad():
-                outputs = model(image_tensor)
-                predictions = postprocess_outputs(outputs)
-            
-            all_predictions[model_name] = predictions
-            
-            # Send intermediate results
-            yield f"data: {json.dumps({'type': 'partial_result', 'model': model_name, 'predictions': predictions})}\n\n"
-        
-        # Final aggregated result
-        final_predictions = aggregate_predictions(all_predictions)
-        yield f"data: {json.dumps({'type': 'final_result', 'predictions': final_predictions, 'progress': 1.0})}\n\n"
-    
-    return StreamingResponse(
-        generate_predictions(),
-        media_type="text/plain"
-    )
-```
-
-**JavaScript Client:**
-```javascript
-class SSEClient {
-    constructor(baseUrl) {
-        this.baseUrl = baseUrl;
-    }
-    
-    streamGeneration(prompt, onToken, onComplete, onError) {
-        const eventSource = new EventSource(
-            `${this.baseUrl}/generate?prompt=${encodeURIComponent(prompt)}`
-        );
-        
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            switch (data.type) {
-                case 'start':
-                    console.log(`Starting generation with ${data.model}`);
-                    break;
-                    
-                case 'token':
-                    onToken(data.text, data.step);
-                    break;
-                    
-                case 'complete':
-                    onComplete(data.full_text);
-                    eventSource.close();
-                    break;
-            }
-        };
-        
-        eventSource.onerror = (error) => {
-            console.error('SSE error:', error);
-            onError(error);
-            eventSource.close();
-        };
-        
-        return eventSource;  // Return for manual closing if needed
-    }
-    
-    streamPrediction(imageUrl, onProgress, onResult, onComplete) {
-        const eventSource = new EventSource(
-            `${this.baseUrl}/predict_stream?image_url=${encodeURIComponent(imageUrl)}`
-        );
-        
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            if (data.stage) {
-                onProgress(data.stage, data.progress);
-            } else if (data.type === 'partial_result') {
-                onResult(data.model, data.predictions);
-            } else if (data.type === 'final_result') {
-                onComplete(data.predictions);
-                eventSource.close();
-            }
-        };
-        
-        return eventSource;
-    }
-}
-
-// Usage example
-const sseClient = new SSEClient('http://localhost:8000');
-
-// Stream text generation
-const eventSource = sseClient.streamGeneration(
-    "Write a story about AI",
-    (token, step) => {
-        // Append each token to UI
-        document.getElementById('output').textContent += token;
-    },
-    (fullText) => {
-        console.log('Generation complete:', fullText);
-    },
-    (error) => {
-        console.error('Generation failed:', error);
-    }
-);
-
-// Stream image prediction
-sseClient.streamPrediction(
-    "https://example.com/image.jpg",
-    (stage, progress) => {
-        updateProgressBar(stage, progress);
-    },
-    (model, predictions) => {
-        displayPartialResults(model, predictions);
-    },
-    (finalPredictions) => {
-        displayFinalResults(finalPredictions);
-    }
-);
-```
-
-### SSE Performance Characteristics
-- **Latency**: <1ms per message after connection
-- **Browser Compatibility**: Native EventSource API
-- **Automatic Reconnection**: Built-in reconnection on connection loss
-- **Memory Usage**: Very low, event-driven
-
-## 📊 Performance Benchmarks
-
-### Latency Comparison (Single Request)
-
-| Protocol      | Serialization | Network | Processing | Total   |
-| ------------- | ------------- | ------- | ---------- | ------- |
-| **REST/HTTP** | 2-5ms         | 1-3ms   | 50ms       | 53-58ms |
-| **gRPC**      | 0.5-1ms       | 0.5-1ms | 50ms       | 51-52ms |
-| **WebSocket** | 1ms           | 0ms*    | 50ms       | 51ms    |
-| **SSE**       | 1ms           | 0ms*    | 50ms       | 51ms    |
-
-*After initial connection
-
-### Throughput Comparison (RPS)
-
-| Protocol      | Small Payload | Large Payload | Concurrent Connections |
-| ------------- | ------------- | ------------- | ---------------------- |
-| **REST/HTTP** | 10,000        | 1,000         | 1,000-5,000            |
-| **gRPC**      | 25,000        | 5,000         | 5,000-20,000           |
-| **WebSocket** | 15,000        | 2,000         | 1,000-10,000           |
-| **SSE**       | 12,000        | 1,500         | 1,000-8,000            |
-
-## 🎯 Decision Framework
-
-### Choose REST when:
-- ✅ Simple request/response pattern
-- ✅ Maximum client compatibility needed
-- ✅ Caching requirements important
-- ✅ Easy debugging and testing required
-
-### Choose gRPC when:
-- ✅ High performance and low latency critical
-- ✅ Strong typing and validation needed
-- ✅ Microservices architecture
-- ✅ Bidirectional streaming required
-
-### Choose WebSocket when:
-- ✅ Real-time bidirectional communication
-- ✅ Stateful connections beneficial
-- ✅ Browser-based real-time apps
-- ✅ Interactive AI applications
-
-### Choose SSE when:
-- ✅ Server-to-client streaming only
-- ✅ Progressive result delivery
-- ✅ LLM token streaming
-- ✅ Simple streaming with HTTP compatibility
+Many production systems combine multiple interfaces—using gRPC internally for performance while exposing REST externally for compatibility. The key is matching the interface to your latency, throughput, and integration requirements.
