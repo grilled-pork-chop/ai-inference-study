@@ -1,6 +1,9 @@
-# Models
+# Models and Checkpoints
+
+> Understanding what you deploy and how.
 
 ## What is a Model?
+
 
 An **AI model** is a mathematical function that has learned patterns from data.  
 It takes inputs (images, text, numbers) and produces outputs (classifications, predictions, or generated text).
@@ -49,12 +52,12 @@ A **checkpoint** is a saved snapshot of a model during training.
 * **Compare progress** — save at different stages to analyze improvements  
 * **Rollback** — revert to a previous stable checkpoint if training diverges
 
-!!! warning "Storage consideration"
-    Checkpoints are **2-3× larger** than the final model.  
-    Example: A 7B parameter checkpoint ≈ 28GB vs 14GB for the model alone.
+!!! warning
+    Checkpoints are **2–3× larger** than inference models.
 
 !!! example "When to use"
     During **training or fine-tuning**, when you need resume, analysis, or rollback.
+
 
 ### Model (Inference-Ready)
 The **final model** is optimized for deployment.
@@ -67,7 +70,7 @@ The **final model** is optimized for deployment.
 | **Architecture definition** | Model structure and configuration                  |
 | **Metadata**                | Input/output shapes, tensor names, version info    |
 
-**Why use checkpoints?**
+**Why use inference models?**
 
 * **Smaller file** — faster download and load  
 * **Faster loading** — no optimizer state to load  
@@ -75,21 +78,3 @@ The **final model** is optimized for deployment.
 
 !!! example "When to use"
     When **deploying to production**: servers, APIs, mobile apps, or edge devices.
-
----
-
-## Quick Comparison
-
-| Feature              | Checkpoint                     | Inference Model        |
-| -------------------- | ------------------------------ | ---------------------- |
-| **Primary use**      | Training and fine-tuning       | Production deployment  |
-| **File size**        | Large (2-3× model size)        | Smaller (weights only) |
-| **Contains**         | Weights + optimizer + metadata | Weights + config only  |
-| **Loading speed**    | Slower                         | Faster                 |
-| **Resume training**  | Yes                            | No                     |
-| **Production ready** | No                             | Yes                    |
-
-!!! tip "Backend Engineer Guidelines"
-    **During training:** Save checkpoints regularly.  
-    **For deployment:** Export to inference format and test thoroughly.  
-    **Storage planning:** Budget for checkpoint storage; deploy lean models.
