@@ -93,19 +93,53 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+
+not_in_nav: |
+  /index.md
+
 nav:
-  - Home: index.md
-  - Models:
-    - models/index.md
-    - Domains: models/models-domains.md
-    - Formats: models/models-formats.md
-    - Quantization: models/models-quantization.md
-  - Inference:
-    - inference/index.md
-    - Interfaces: inference/inference-interfaces.md
-    - Servers: inference/inference-servers.md
-  - Benchmarks:
-    - benchmarks/index.md
-    - 1 - Image Classification: benchmarks/group1-image-classification.md
-    - 2 - Text Generation: benchmarks/group2-text-generation.md
-    - 3 - Embeddings: benchmarks/group3-embeddings.md
+  - Fundamentals:
+    - Introduction: 00-fundamentals/00-introduction.md
+    - Models and Checkpoints: 00-fundamentals/01-models-checkpoints.md
+    - Inference: 00-fundamentals/02-inference.md
+    - Inference Lifecycle: 00-fundamentals/03-inference-lifecycle.md
+    - Workload Types: 00-fundamentals/04-workloads.md
+    - Deployment Targets: 00-fundamentals/05-deployment-targets.md
+    - GPU Fundamentals: 00-fundamentals/06-gpu-fundamentals.md
+    - Common Pitfalls: 00-fundamentals/07-common-pitfalls.md
+  - Models Usage & Patterns:
+      - Introduction: 01-models-usage-patterns/00-introduction.md
+      - Single Model: 01-models-usage-patterns/01-single-model.md
+      - Pipeline: 01-models-usage-patterns/02-pipeline.md
+      - Ensemble: 01-models-usage-patterns/03-ensemble.md
+      - RAG: 01-models-usage-patterns/04-rag.md
+      - Agentic: 01-models-usage-patterns/05-agentic.md
+  - Inference Servers:
+    - Introduction: 02-inference-servers/00-introduction.md
+    - Single-Model Servers: 02-inference-servers/01-single-model.md
+    - Multi-Model / Pipelines: 02-inference-servers/02-pipeline.md
+    - LLM-Specific Servers: 02-inference-servers/03-llm-servers.md
+    - Deployment & Scaling Patterns: 02-inference-servers/04-scaling.md
+    - Comparison & Decision Guide: 02-inference-servers/05-comparison.md
+  - Architecture Patterns:
+    - Introduction: 03-architecture-patterns/00-introduction.md
+    - API & Routing: 03-architecture-patterns/01-api-routing.md
+    - State Management: 03-architecture-patterns/02-state-management.md
+    - Scaling & Load Management: 03-architecture-patterns/03-scaling-and-load.md
+    - Streaming & LLM Patterns: 03-architecture-patterns/04-streaming-patterns.md
+    - Observability Integration: 03-architecture-patterns/05-observability-integration.md
+  - Deployment:
+    - Introduction: 04-deployment/00-introduction.md
+    - Containerization: 04-deployment/01-containerization.md
+    - Kubernetes & Helm: 04-deployment/02-kubernetes-helm.md
+    - CI/CD: 04-deployment/03-ci-cd.md
+    - Edge & Multi-Tenant: 04-deployment/04-edge-multi-tenant.md
+  - Observability:
+    - Introduction: 05-observability/00-introduction.md
+    - Metrics: 05-observability/01-metrics.md
+    - Logging & Tracing: 05-observability/02-logging-tracing.md
+    - Tools: 05-observability/03-tools.md
+  - Projects & Examples: 06-projects/00-projects.md
+  - References:
+    - Glossary: 07-references/00-glossary.md
+    - AI Schemas: 07-references/01-ai-schemas.md

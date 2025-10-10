@@ -1,53 +1,117 @@
 ---
 hide:
   navigation: true
-  toc: true
 ---
 
-# AI Inference Study
+# AI Inference in Production
 
-A comprehensive guide to deploying AI models in production environments, covering everything from model formats to serving infrastructure and real-world benchmark projects.
+> A practical guide for backend engineers building, deploying, and operating AI models in real-world production environments.
 
-## 🎯 Overview
+---
 
-This documentation provides practical guidance for backend engineers and MLOps practitioners on:
+## Purpose
 
-- **Models**: Understanding different AI domains, architectures, and formats for production deployment
-- **Inference**: Comparing serving interfaces (REST, gRPC, WebSocket) and inference servers (Triton, TorchServe, vLLM)
-- **Projects**: Three complete benchmark stacks with performance comparisons and deployment guides
+This documentation is for backend engineers who want to **turn trained models into production-ready services**.
 
-## 🚀 Quick Start
+You will learn:
 
-1. **Choose your model domain**: [Computer Vision, NLP/LLMs, Speech, Multimodal](models/models-domains.md)
-2. **Select model format**: [ONNX, TorchScript, SavedModel](models/models-formats.md) based on your infrastructure
-3. **Pick serving interface**: [REST, gRPC, WebSocket](inference/inference-interfaces.md) for your latency requirements
-4. **Choose inference server**: [Triton, TorchServe, vLLM](inference/inference-servers.md) for your scale and complexity needs
-5. **Deploy with examples**: Use our [benchmark projects](benchmarks/index.md) as starting templates
+* How inference works and how to structure AI workloads
+* How to serve models efficiently and reliably
+* How to design scalable, maintainable architectures
+* How to deploy, monitor, and secure AI services
+* Practical examples and production-ready patterns
 
-## 📊 Benchmark Groups
+---
 
-TODO
+## Documentation Overview
 
-## 🏗️ Architecture Philosophy
+The guide is organized into **progressive sections**, starting from the fundamentals and moving toward production examples:
 
-Our approach focuses on **production-ready solutions** with:
+---
 
-- **Performance**: Detailed benchmarks with real hardware metrics
-- **Scalability**: Kubernetes-native deployments with auto-scaling
-- **Observability**: Prometheus/Grafana monitoring out-of-the-box
-- **Reliability**: Health checks, circuit breakers, and graceful degradation
+### [Fundamentals](./00-fundamentals/00-introduction.md)
+> Core concepts every backend engineer should understand before deploying AI.
 
-## 📚 Navigation
+* Introduction to AI inference
+* Understanding **models and checkpoints**
+* The **inference process** and lifecycle
+* Common pitfalls in production
+* GPU fundamentals and deployment targets
+* Different workload types and their implications
 
-### [Models](models/index.md)
-- [Domains](models/models-domains.md): Computer Vision, NLP/LLMs, Speech, Multimodal
-- [Formats](models/models-formats.md): ONNX, TorchScript, SavedModel, GGUF, TensorRT
+---
 
-### [Inference](inference/index.md)
-- [Interfaces](inference/inference-interfaces.md): REST, gRPC, WebSocket, SSE comparison
-- [Servers](inference/inference-servers.md): Triton, TorchServe, vLLM, KServe analysis
+### [Model Usage & Patterns](./01-models-usage-patterns/00-introduction.md)
 
-### [Benchmarks](benchmarks/index.md)
-- [Image Classification](benchmarks/group1-image-classification.md): Measure latency and throughput for vision models on single images and batched inputs.
-- [Text Generation](benchmarks/group2-text-generation.md): Benchmark large language models (LLMs) for text completion and conversational tasks.
-- [Embeddings](benchmarks/group3-embeddings.md): Evaluate throughput and scalability for generating vector embeddings.
+> How to structure and deploy AI models in real-world systems.
+
+* Single model APIs vs pipelines vs ensembles
+* Retrieval-augmented generation (RAG) patterns
+* Agentic systems and reasoning loops
+* Latency and resource considerations
+
+---
+
+### [Inference Servers](./02-inference-servers/00-introduction.md)
+
+> Choosing the right execution engine for your workload.
+
+* Triton, vLLM, TGI, TorchServe, Ray Serve, Ollama
+* Strengths, limitations, and trade-offs
+* Real-world hybrid server examples
+
+---
+
+### [Architecture Patterns](./03-architecture-patterns/00-introduction.md)
+
+> Organize your backend for reliability, scalability, and observability.
+
+* Standard layouts for API → router → model servers
+* State management strategies
+* Scaling and load management
+* Streaming / LLM-specific patterns
+
+---
+
+### [Deployment](./04-deployment/00-introduction.md)
+
+> Production-ready deployment strategies for AI workloads.
+
+* Containerization best practices
+* Kubernetes and Helm patterns
+* CI/CD for models with lifecycle management
+* Edge and multi-tenant deployment considerations
+
+---
+
+### [Observability](./05-observability/00-introduction.md)
+
+> Keep AI systems transparent and manageable.
+
+* Key metrics and what to monitor
+* Logging, tracing, and alerting
+* Tools: Prometheus, Grafana, Loki, OpenTelemetry
+
+---
+
+### [Projects & Examples](./06-projects/00-projects.md)
+
+> Concrete production-ready AI projects to learn from.
+
+* Image classification APIs
+* Streaming LLM chatbots
+* RAG document Q&A pipelines
+* Batch video analysis
+* Multi-model ensembles
+* Edge inference gateways
+* Cost-optimized inference setups
+
+---
+
+### [References & Schema](./07-references/00-glossary.md)
+
+> Everything you need to speak the same language.
+
+* Glossary of AI terms (quantization, distillation, scaling, etc.)
+* Model domain taxonomy (CV, NLP, Speech, Multimodal)
+* Concept maps of the full AI lifecycle
