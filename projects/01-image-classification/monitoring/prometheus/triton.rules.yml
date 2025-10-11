@@ -1,0 +1,11 @@
+groups:
+  - name: triton_alerts
+    rules:
+      - alert: TritonServerDown
+        expr: up{job="triton"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Triton server is down"
+          description: "No metrics have been received from Triton for 30 seconds."
