@@ -35,10 +35,10 @@ async def health_check() -> PlainTextResponse:
     },
 )
 async def ready(
-    triton_client: Annotated[InferenceClient, Depends(get_inference_client)],
+    inference_client: Annotated[InferenceClient, Depends(get_inference_client)],
 ) -> PlainTextResponse:
-    model_ready = await triton_client.is_model_ready()
-    server_ready = await triton_client.is_server_ready()
+    model_ready = await inference_client.is_model_ready()
+    server_ready = await inference_client.is_server_ready()
     if not (model_ready and server_ready):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

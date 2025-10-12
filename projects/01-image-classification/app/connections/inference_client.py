@@ -1,10 +1,15 @@
-"""Async Triton Inference Server client wrapper."""
+"""Inference Server client wrapper."""
 
 import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
 
-from tritonclient.http import InferenceServerClient, InferInput, InferRequestedOutput, InferResult
+from tritonclient.grpc.aio import (
+    InferenceServerClient,
+    InferInput,
+    InferRequestedOutput,
+    InferResult,
+)
 from tritonclient.utils import InferenceServerException
 
 from app.core.config import settings
@@ -12,12 +17,12 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 class InferenceClient:
-    """Async wrapper around Triton HTTP client."""
+    """Async wrapper around Triton GRPC client."""
 
     def __init__(self) -> None:
-        """Initialize Triton HTTP async client."""
+        """Initialize Triton GRPC async client."""
         self.client = InferenceServerClient(
-            url=f"{settings.TRITON_HOST}:{settings.TRITON_HTTP_PORT}", verbose=False,
+            url=f"{settings.TRITON_HOST}:{settings.TRITON_GRPC_PORT}", verbose=False,
         )
         self.model_name = settings.MODEL_NAME
 
@@ -39,33 +44,25 @@ class InferenceClient:
             RuntimeError: If inference fails.
         """
         try:
-            return await self.client.async_infer(
+
+            return await self.client.infer(
                 model_name=self.model_name,
                 inputs=inputs,
                 outputs=outputs,
             )
+
         except InferenceServerException as e:
-            msg = f"Triton inference failed: {e}"
+            msg = f"Inference failed: {e}"
             raise RuntimeError(msg) from e
 
     async def is_server_ready(self) -> bool:
-        """Check if Triton server is ready.
-
-        Returns:
-            bool: True if ready, False otherwise.
-        """
         return await self.client.is_server_ready()
 
     async def is_model_ready(self) -> bool:
-        """Check if model is loaded and ready.
-
-        Returns:
-            bool: True if model is ready.
-        """
-        return self.client.is_model_ready(self.model_name)
+        return await self.client.is_model_ready(self.model_name)
 
     async def connect(self, connection_timeout: int = 30, interval: float = 1.0) -> None:
-        """Wait until Triton server and model are ready.
+        """Wait until server and model are ready.
 
         Args:
             connection_timeout: Max seconds to wait before failing.
@@ -77,14 +74,14 @@ class InferenceClient:
         start = datetime.now(UTC)
         deadline = start + timedelta(seconds=connection_timeout)
 
-        logger.info("Connecting to Triton at %s:%d", settings.TRITON_HOST, settings.TRITON_HTTP_PORT)
+        logger.info("Connecting to Server at %s:%d", settings.TRITON_HOST, settings.TRITON_GRPC_PORT)
 
         while datetime.now(UTC) < deadline:
             if await self.is_server_ready() and await self.is_model_ready():
                 logger.info("Inference server and model is ready.")
                 return
 
-            logger.debug("Ingference server not ready yet.")
+            logger.debug("Inference server not ready yet.")
             await asyncio.sleep(interval)
 
         msg = (
@@ -94,5 +91,5 @@ class InferenceClient:
         raise TimeoutError(msg)
 
     async def disconnect(self) -> None:
-        """Disconnect to inference server."""
-        self.client.close()
+        """Disconnect from inference server."""
+        await self.client.close()

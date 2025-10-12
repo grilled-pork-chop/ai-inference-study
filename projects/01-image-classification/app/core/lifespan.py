@@ -13,8 +13,6 @@ from app.services.classification_service import ClassificationService
 
 logger = logging.getLogger(__name__)
 
-
-
 async def load_imagenet_classes() -> list[str]:
     """Load ImageNet class labels from a local JSON file asynchronously.
 
@@ -45,7 +43,7 @@ async def lifespan(app: FastAPI) -> None:
     imagenet_classes = await load_imagenet_classes()
 
     inference_client = InferenceClient()
-    # await inference_client.connect()
+    await inference_client.connect()
 
     classification_service = ClassificationService(inference_client, imagenet_classes)
 

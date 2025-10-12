@@ -90,9 +90,9 @@ metrics: ## Show Prometheus metrics
 quick-start: install-dev setup-model docker-run ## Quick start for development
 	@echo
 	@echo "🚀 Development environment ready!"
-	@echo "   📝 API Documentation: http://localhost:8000/docs"
-	@echo "   💖 API Health: http://localhost:8000/api/v1/health"
-	@echo "   📊 Metrics: http://localhost:8000/metrics"
+	@echo "   📝 API Documentation: http://localhost:8080/docs"
+	@echo "   💖 API Health: http://localhost:8080/api/v1/health"
+	@echo "   📊 Metrics: http://localhost:8080/metrics"
 	@echo "   📈 Grafana: http://localhost:3000 (admin/admin123)"
 	@echo "   🔍 Prometheus: http://localhost:9090"
 	@echo
