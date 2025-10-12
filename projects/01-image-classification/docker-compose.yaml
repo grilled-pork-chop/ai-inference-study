@@ -2,10 +2,15 @@ services:
   triton:
     image: nvcr.io/nvidia/tritonserver:23.10-py3
     container_name: triton-inference-server
-    command: tritonserver --model-repository=/models --disable-auto-complete-config
+    command: >
+      tritonserver
+      --model-repository=/models
+      --disable-auto-complete-config
+      --metrics-port=8002
     ports:
       - "8000:8000"  # HTTP
       - "8001:8001"  # gRPC
+      - "8002:8002"  # Metrics
     volumes:
       - ./model:/models
     environment:
@@ -65,7 +70,6 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yml"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/prometheus/triton.rules.yml:/etc/prometheus/triton.rules.yml
     networks:
       - inference-net
     depends_on:
