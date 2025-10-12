@@ -21,3 +21,4 @@ site
 # IDEs & Editors
 .idea
 *~
+*.onnx
