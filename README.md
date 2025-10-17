@@ -1,101 +1,151 @@
-# AI Inference Study (Backend Developer’s View)
+# AI Inference Study
 
-A practical guide to **putting AI models into production**:  
-covering models, inference interfaces, serving frameworks, monitoring, and benchmarking.  
-This repository combines **documentation (with MkDocs)** and **hands-on projects** to help backend developers understand and test modern inference stacks.
+**AI Inference Study** is a guide for backend engineers building production-grade AI inference systems.
+It focuses on real-world deployments, serving frameworks, observability, and scaling patterns.
 
-## Documentation
+---
 
-The full documentation is built with [MkDocs](https://www.mkdocs.org/) using the [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) theme and hosted on **GitHub Pages**.
+## Overview
 
-It covers:
-- **AI Models** – types (LLMs, vision, speech, multimodal) and specializations  
-- **Interfaces** – REST, gRPC, WebSocket, streaming APIs, MCP.  
-- **Inference Servers** – Triton, TorchServe, BentoML, KServe, vLLM, etc.  
-- **Projects** – concrete stacks for benchmarking  
-- **Benchmarks** – methodology, metrics, and results  
-- **Production Concerns** – scaling, monitoring, security  
+This study explores how to turn trained AI models into reliable, maintainable inference services.
+The documentation covers the full production lifecycle — from model usage to deployment and monitoring.
 
-## Installation
+**Main chapters:**
 
-### Prerequisites
-- Python **3.12+**
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management
+1. **Fundamentals** – Model lifecycles, GPU and workload concepts
+2. **Model Usage & Patterns** – Single models, pipelines, RAG, agentic flows
+3. **Inference Servers** – Triton, vLLM, TorchServe, TGI, Ollama
+4. **Architecture Patterns** – API layout, scaling, streaming, caching
+5. **Deployment** – Docker, Kubernetes, Helm, CI/CD, model updates
+6. **Observability** – Metrics, tracing, logging, alerting
+7. **Projects** – End-to-end production-ready examples
 
-### Setup
+---
+
+## Small AI Projects
+
+Each project represents a deployable pattern:
+
+### [1. Image Classification API](https://github.com/grilled-pork-chop/ai-inference-study/tree/main/projects/01-image-classification)
+
+* **Concepts:** Single model, Triton, batching
+* **Stack:** FastAPI + Triton + ResNet50
+* **Use Case:** Real-time product categorization
+* **Highlights:** Dynamic batching, Prometheus metrics, sub-100ms latency
+
+### 2. Streaming LLM Chat
+
+* **Concepts:** vLLM, token streaming
+* **Stack:** FastAPI + vLLM + Llama 3
+* **Use Case:** Customer support chatbot
+* **Highlights:** SSE streaming, Redis context, backpressure handling
+
+### 3. RAG Document Q&A
+
+* **Concepts:** Retrieval pipeline, embeddings
+* **Stack:** FastAPI + Triton (embeddings) + vLLM + Milvus
+* **Use Case:** Knowledge base search
+* **Highlights:** Chunking, semantic retrieval, source citations
+
+### 4. Batch Video Analysis
+
+* **Concepts:** Async jobs, batch inference
+* **Stack:** FastAPI + Celery + Redis + Triton
+* **Use Case:** Content moderation
+* **Highlights:** Job priority, progress tracking, webhooks
+
+### 5. Multi-Model Ensemble
+
+* **Concepts:** Parallel inference, aggregation
+* **Stack:** FastAPI + Triton (3 models)
+* **Use Case:** Fraud detection
+* **Highlights:** Weighted voting, fallback handling, low latency
+
+### 6. Agentic Email Assistant
+
+* **Concepts:** Agents, tools, reasoning loops
+* **Stack:** FastAPI + vLLM + LangGraph + Redis + PostgreSQL
+* **Use Case:** Automated email triage
+* **Highlights:** Persistent memory, structured reasoning logs
+
+### 7. Cost-Optimized Inference
+
+* **Concepts:** Quantization, caching, autoscaling
+* **Stack:** FastAPI + ONNX Runtime + Redis + S3
+* **Use Case:** Translation service
+* **Highlights:** INT8 models, response caching, spot GPU scaling
+
+### 8. Monitored CV Pipeline
+
+* **Concepts:** Observability, tracing
+* **Stack:** FastAPI + Triton + Prometheus + Grafana + Loki
+* **Use Case:** OCR with SLA monitoring
+* **Highlights:** Full tracing, GPU dashboards, latency alerts
+
+### 9. Model A/B Testing Platform
+
+* **Concepts:** Canary deployment, rollout control
+* **Stack:** FastAPI + Triton + PostgreSQL
+* **Use Case:** Sentiment model rollout
+* **Highlights:** Traffic split, rollback logic, accuracy comparison
+
+### 10. Edge Inference Gateway
+
+* **Concepts:** Edge deployment, offline mode
+* **Stack:** FastAPI + ONNX Runtime + SQLite
+* **Use Case:** IoT image classification
+* **Highlights:** Quantized models, local cache, low memory use
+
+### 11. Secure Multi-Tenant Inference
+
+* **Concepts:** Auth, rate limiting, isolation
+* **Stack:** FastAPI + Keycloak + Triton + PostgreSQL
+* **Use Case:** SaaS inference platform
+* **Highlights:** OAuth2, per-tenant models, audit logs
+
+### 12. Auto-Scaling LLM Service
+
+* **Concepts:** HPA, GPU pooling
+* **Stack:** Kubernetes + vLLM + KEDA + Prometheus
+* **Use Case:** Elastic text generation
+* **Highlights:** Queue-based scaling, GPU sharing, zero-idle cost
+
+---
+
+## Setup
+
+**Requirements**
+
+* Python 3.12+
+* [uv](https://docs.astral.sh/uv/getting-started/installation/)
+
+**Install**
+
 ```bash
 uv sync --frozen
 ```
 
-### Run Docs Locally
+**Run Docs**
 
 ```bash
 uv run mkdocs serve --livereload --open
 ```
 
-### Build Static Site
+**Build**
 
 ```bash
 uv run mkdocs build
 ```
 
-## Benchmark Groups
+---
 
-This study is organized into groups of common AI workloads.
-Each group is benchmarked across multiple serving stacks and interfaces to provide fair and comparable results.
+## Goals
 
-### Group 1: Image Classification (ResNet50)
-- Models: ResNet50 (ONNX/PyTorch)
-- Focus: Latency, throughput, GPU utilization
-- Stacks: FastAPI + ONNXRuntime, Triton, TorchServe
+* Share clear production patterns for AI inference
+* Compare serving frameworks by reliability, not benchmarks
+* Provide ready-to-deploy project templates
+* Encourage observability, versioning, and maintainability
 
-### Group 2: Text Generation (LLMs)
-- Models: GPT-2 small, OPT-125M
-- Focus: Time-to-first-token, streaming latency, throughput
-- Stacks: FastAPI + PyTorch, vLLM, TGI
+---
 
-### Group 3: Embeddings
-- Models: MiniLM, Sentence-BERT
-- Focus: High-throughput embedding generation
-- Stacks: FastAPI + PyTorch, Triton, TEI (Text Embedding Inference)
-
-### Group 4: Multimodal Inference
-- Models: CLIP (text-image similarity), LLaVA (vision + language assistant)
-- Focus: Image-text encoding, end-to-end multimodal reasoning
-- Stacks: FastAPI + PyTorch, Triton ensembles, vLLM (for LLaVA)
-
-### Group 5: Speech (STT/TTS)
-- Models: Whisper (speech-to-text), Coqui TTS / OpenVoice (text-to-speech)
-- Focus: Real-time factor, streaming latency, throughput
-- Stacks: FastAPI + Whisper, Triton (Whisper ONNX/TensorRT), NVIDIA Riva
-
-### Group 6: Batch Serving
-- Models: Any model that benefits from batching (LLMs, embeddings)
-- Focus: Dynamic batching, throughput scaling, tail latency
-- Stacks: FastAPI + custom batching, Triton, vLLM, TGI, TorchServe
-
-## Projects
-
-Each group includes comparable projects where only one variable (stack) changes.
-This enables apples-to-apples benchmarking.
-
-1. FastAPI + PyTorch/ONNX Stack
-2. Triton Inference Server Stack
-3. TorchServe Stack
-4. vLLM Stack
-5. TGI (Text Generation Inference) Stack
-6. TEI (Text Embedding Inference) Stack
-
-## Benchmarking Methodology
-
-- Load generation: `k6`, `locust`, or Python async benchmarking tools
-- Metrics: Latency (p50, p95, p99), throughput, time-to-first-token, GPU utilization
-- Monitoring: Prometheus + Grafana
-- Result storage: JSON logs processed into visual reports with Pandas and Matplotlib
-
-## Roadmap
-
-- Add quantization benchmarks (FP32, FP16, INT8)
-- Add multi-GPU scaling (Triton, vLLM, TGI)
-- Add Kubernetes deployment (KServe, BentoML)
-- Compare cost-efficiency (throughput per $/hour on cloud GPUs)
+Full documentation: [https://grilled-pork-chop.github.io/ai-inference-study/](https://grilled-pork-chop.github.io/ai-inference-study/)

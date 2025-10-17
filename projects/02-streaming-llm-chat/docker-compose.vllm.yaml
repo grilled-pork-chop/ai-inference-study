@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    container_name: chat-api
+    env_file: .env.vllm
+    ports:
+      - "8080:8080"
+    depends_on:
+      - vllm
+      - redis
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-server
+    command: >
+      --model ${LLM_MODEL}
+    ports:
+      - "8000:8000"
+    environment:
+      - TRANSFORMERS_CACHE=/data/models
+      - VLLM_LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./data/models:/data/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
