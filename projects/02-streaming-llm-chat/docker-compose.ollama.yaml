@@ -15,11 +15,6 @@ services:
       - "11434:11434"
     volumes:
       - ./ollama:/root/.ollama
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     entrypoint: >
       sh -c "
         ollama serve & 
@@ -34,8 +29,3 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5

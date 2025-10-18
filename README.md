@@ -33,10 +33,10 @@ Each project represents a deployable pattern:
 * **Use Case:** Real-time product categorization
 * **Highlights:** Dynamic batching, Prometheus metrics, sub-100ms latency
 
-### 2. Streaming LLM Chat
+### [2. Streaming LLM Chat](https://github.com/grilled-pork-chop/ai-inference-study/tree/main/projects/02-streaming-llm-chat)
 
-* **Concepts:** vLLM, token streaming
-* **Stack:** FastAPI + vLLM + Llama 3
+* **Concepts:** LLM, token streaming
+* **Stack:** FastAPI + LLM + Ollama/vLLM
 * **Use Case:** Customer support chatbot
 * **Highlights:** SSE streaming, Redis context, backpressure handling
 

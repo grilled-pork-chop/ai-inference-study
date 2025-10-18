@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         redis_client=redis_client, ttl_seconds=settings.CONVERSATION_TTL_SECONDS,
     )
     llm_client = LLMClient(
-        base_url=settings.LLM_URL,
+        base_url=settings.LLM_URL, api_key=settings.LLM_API_KEY
     )
     llm_service = LLMService(
         conversation_service=conversation_service, llm_client=llm_client,

@@ -50,19 +50,6 @@ test-cov: ## Run tests with coverage (placeholder)
 docker-build: ## Build Docker image for the API service
 	docker build -t $(DOCKER_IMAGE_NAME):latest .
 
-docker-run: ## Run full stack with Docker Compose
-	$(DOCKER_COMPOSE) up -d
-
-docker-stop: ## Stop Docker containers
-	$(DOCKER_COMPOSE) down
-
-docker-logs: ## Show application logs
-	$(DOCKER_COMPOSE) logs -f api
-
-docker-clean: ## Clean Docker resources
-	$(DOCKER_COMPOSE) down -v --remove-orphans
-	docker system prune -f
-
 health: ## Check application health
 	@echo "🏥 Checking application health..."
 	curl -f http://localhost:8080/health || echo "❌ API not healthy"

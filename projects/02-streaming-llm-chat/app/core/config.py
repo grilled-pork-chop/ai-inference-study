@@ -47,8 +47,7 @@ class Settings(BaseSettings):
 
     ##### Services settings ######
     LLM_URL: str = Field("http://localhost:8000/v1", description="URL of the LLM inference server.")
-
-
+    LLM_API_KEY: str = Field(..., description="API key to access the LLM inference server.")
     REDIS_URL: str = Field("redis://localhost:6379", description="URL of the Redis server.")
     CONVERSATION_TTL_SECONDS: int = Field(
         3600,

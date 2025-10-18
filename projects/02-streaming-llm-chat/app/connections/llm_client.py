@@ -16,14 +16,15 @@ logger = logging.getLogger(__name__)
 class LLMClient:
     """Async wrapper around an OpenAI-compatible inference backend (vLLM, Ollama, OpenAI)."""
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str, api_key: str) -> None:
         """Initialize an LLM client.
 
         Args:
             base_url: Base URL of the LLM API (e.g. `http://localhost:8000/v1`).
+            api_key: API key of the LLM API
         """
         self._url = base_url
-        self._client = AsyncOpenAI(base_url=self._url)
+        self._client = AsyncOpenAI(base_url=self._url, api_key=api_key)
         logger.info("LLM client initialized (base_url=%s)", self._url)
 
     async def generate_stream(
@@ -62,6 +63,7 @@ class LLMClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
+                stream=True,
             )
 
             async for chunk in stream_obj:

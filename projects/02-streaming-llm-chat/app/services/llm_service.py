@@ -88,7 +88,6 @@ class LLMService:
                 model=model,
                 temperature=temperature,
                 top_p=top_p,
-                stream=stream,
             ):
                 full_response += token
                 yield token
