@@ -1,0 +1,52 @@
+[project]
+name = "02-streaming-llm-chat"
+version = "0.1.0"
+description = "Streaming LLM Chat API using FastAPI and vLLM"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.119.0",
+    "pydantic-settings>=2.11.0",
+    "uvicorn>=0.37.0",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "openai>=2.4.0",
+    "redis>=6.4.0",
+]
+
+[dependency-groups]
+lint = [
+    "black>=25.9.0",
+    "ruff>=0.14.0",
+]
+
+
+# --- BUILD --- #
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+start = "app.main:run"
+
+[tool.hatch.build]
+include = ["app/**/*.py"]
+
+# --- Tools --- #
+[tool.uv]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+[tool.uv.workspace]
+members = ["02-streaming-llm-chat"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
+docstring-code-format = true
+preview = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D", "INP001", "PGH004", "EXE002", "TRY400"]

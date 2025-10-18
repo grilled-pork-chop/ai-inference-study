@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    container_name: chat-api
+    env_file: .env.ollama
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ollama
+      - redis
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+    entrypoint: >
+      sh -c "
+        ollama serve & 
+        sleep 3 &&
+        ollama pull ${LLM_MODEL} &&
+        tail -f /dev/null
+      "
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes

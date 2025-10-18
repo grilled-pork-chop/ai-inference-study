@@ -19,14 +19,8 @@ An image classification API using **FastAPI** and **Triton Inference Server**. I
 
 ```bash
 # Install dependencies
-make install dev
+make install-dev
 
 # Run locally
-uvicorn src.image_classification_api.main:app --reload
-
-# Format and lint
-make format lint
-
-# Run tests  
-make test
+make run
 ```

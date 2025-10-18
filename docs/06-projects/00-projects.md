@@ -6,9 +6,9 @@ hide:
 # Small AI Project Examples
 
 ## 1. 📸 Image Classification API
-**Concepts:** Single model, Triton, batching, health checks  
-**Stack:** FastAPI + Triton + ResNet50  
-**Use Case:** Real-time product categorization for e-commerce  
+**Concepts:** Single model, Triton, batching, health checks
+**Stack:** FastAPI + Triton + ResNet50
+**Use Case:** Real-time product categorization
 **Key Features:**
 
 - Dynamic batching for efficiency
@@ -19,9 +19,9 @@ hide:
 ---
 
 ## 2. 💬 Streaming LLM Chat
-**Concepts:** vLLM, WebSocket streaming, token generation  
-**Stack:** FastAPI + vLLM + Llama 3  
-**Use Case:** Customer support chatbot  
+**Concepts:** vLLM, WebSocket streaming, token generation
+**Stack:** FastAPI + vLLM + Llama 3
+**Use Case:** Customer support chatbot
 **Key Features:**
 
 - Server-Sent Events for streaming
@@ -32,9 +32,9 @@ hide:
 ---
 
 ## 3. 📚 RAG Document Q&A
-**Concepts:** Pipeline, embeddings, vector DB, retrieval  
-**Stack:** FastAPI + Triton (embeddings) + vLLM + Milvus  
-**Use Case:** Internal knowledge base query system  
+**Concepts:** Pipeline, embeddings, vector DB, retrieval
+**Stack:** FastAPI + Triton (embeddings) + vLLM + Milvus
+**Use Case:** Knowledge base search 
 **Key Features:**
 
 - Document chunking & indexing
@@ -45,9 +45,9 @@ hide:
 ---
 
 ## 4. 🎥 Batch Video Analysis
-**Concepts:** Async jobs, Celery, queuing, batch inference  
-**Stack:** FastAPI + Celery + Redis + Triton (CV models)  
-**Use Case:** Content moderation pipeline  
+**Concepts:** Async jobs, Celery, queuing, batch inference
+**Stack:** FastAPI + Celery + Redis + Triton (CV models)
+**Use Case:** Content moderation
 **Key Features:**
 
 - Job queue with priority
@@ -58,9 +58,9 @@ hide:
 ---
 
 ## 5. 🔀 Multi-Model Ensemble
-**Concepts:** Ensemble, parallel inference, aggregation  
-**Stack:** FastAPI + Triton (3 models) + aggregation layer  
-**Use Case:** Fraud detection scoring  
+**Concepts:** Ensemble, parallel inference, aggregation
+**Stack:** FastAPI + Triton (3 models) + aggregation layer
+**Use Case:** Fraud detection
 **Key Features:**
 
 - Parallel model execution
@@ -71,9 +71,9 @@ hide:
 ---
 
 ## 6. 🤖 Agentic Email Assistant
-**Concepts:** Agents, tools, memory, reasoning loops  
-**Stack:** FastAPI + vLLM + LangGraph + Redis + PostgreSQL  
-**Use Case:** Automated email triage and response  
+**Concepts:** Agents, tools, memory, reasoning loops
+**Stack:** FastAPI + vLLM + LangGraph + Redis + PostgreSQL
+**Use Case:** Automated email triage
 **Key Features:**
 
 - Tool calling (search, send, schedule)
@@ -84,9 +84,9 @@ hide:
 ---
 
 ## 7. 💰 Cost-Optimized Inference
-**Concepts:** Caching, quantization, spot instances, batching  
-**Stack:** FastAPI + ONNX Runtime + Redis + S3  
-**Use Case:** High-volume translation service  
+**Concepts:** Caching, quantization, spot instances, batching
+**Stack:** FastAPI + ONNX Runtime + Redis + S3
+**Use Case:** Translation service
 **Key Features:**
 
 - INT8 quantized models
@@ -97,9 +97,9 @@ hide:
 ---
 
 ## 8. 📊 Monitored CV Pipeline
-**Concepts:** Observability, metrics, tracing, alerts  
-**Stack:** FastAPI + Triton + Prometheus + Grafana + Loki + OpenTelemetry  
-**Use Case:** Production OCR service with SLA monitoring  
+**Concepts:** Observability, metrics, tracing, alerts
+**Stack:** FastAPI + Triton + Prometheus + Grafana + Loki + OpenTelemetry
+**Use Case:** Production OCR service with SLA monitoring
 **Key Features:**
 
 - Full request tracing
@@ -110,9 +110,9 @@ hide:
 ---
 
 ## 9. 🔄 Model A/B Testing Platform
-**Concepts:** Traffic splitting, canary deployment, metrics comparison  
-**Stack:** FastAPI + Triton (2 model versions) + PostgreSQL  
-**Use Case:** Gradual rollout of improved sentiment model  
+**Concepts:** Traffic splitting, canary deployment, metrics comparison
+**Stack:** FastAPI + Triton (2 model versions) + PostgreSQL
+**Use Case:** Gradual rollout of improved sentiment model
 **Key Features:**
 
 - 90/10 traffic split
@@ -123,9 +123,9 @@ hide:
 ---
 
 ## 10. 🌐 Edge Inference Gateway
-**Concepts:** Model quantization, edge deployment, offline mode  
-**Stack:** FastAPI + ONNX Runtime + SQLite  
-**Use Case:** IoT device classification at retail stores  
+**Concepts:** Model quantization, edge deployment, offline mode
+**Stack:** FastAPI + ONNX Runtime + SQLite
+**Use Case:** IoT image classification 
 **Key Features:**
 
 - 4-bit quantized models
@@ -136,9 +136,9 @@ hide:
 ---
 
 ## 11. 🔐 Secure Multi-Tenant Inference
-**Concepts:** Auth, rate limiting, tenant isolation, encryption  
-**Stack:** FastAPI + Keycloak + Triton + PostgreSQL  
-**Use Case:** SaaS platform with per-customer models  
+**Concepts:** Auth, rate limiting, tenant isolation, encryption
+**Stack:** FastAPI + Keycloak + Triton + PostgreSQL
+**Use Case:** SaaS platform with per-customer models
 **Key Features:**
 
 - OAuth2 + JWT validation
@@ -149,9 +149,9 @@ hide:
 ---
 
 ## 12. 🚀 Auto-Scaling LLM Service
-**Concepts:** HPA, queue-based scaling, GPU pooling  
-**Stack:** Kubernetes + vLLM + KEDA + Prometheus  
-**Use Case:** Variable-load text generation API  
+**Concepts:** HPA, queue-based scaling, GPU pooling
+**Stack:** Kubernetes + vLLM + KEDA + Prometheus
+**Use Case:** Variable-load text generation API
 **Key Features:**
 
 - Scale 0→5 replicas based on queue
